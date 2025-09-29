@@ -194,12 +194,14 @@ const FoxAILearningPlatform = () => {
       {!isChatOpen && (
         <button
           onClick={() => setIsChatOpen(true)}
-          className="fixed bottom-6 right-6 w-20 h-20 bg-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all flex items-center justify-center group"
+          className="fixed bottom-6 right-6 w-24 h-24 bg-gradient-to-br from-orange-500 to-red-600 rounded-full shadow-xl hover:shadow-2xl transform hover:scale-110 transition-all duration-300 flex flex-col items-center justify-center group overflow-hidden"
         >
+          <span className="text-xs font-bold text-white mb-1 tracking-wider">FoxAI</span>
           <img
             src="/images/foxai-icon.png" alt="FoxAI"
-            className="w-16 h-16 object-contain"
+            className="w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-300"
           />
+          <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-full"></div>
         </button>
       )}
 
