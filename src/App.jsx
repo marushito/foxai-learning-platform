@@ -11,6 +11,9 @@ const FoxAILearningPlatform = () => {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showInstructorButton, setShowInstructorButton] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [lastUserMessage, setLastUserMessage] = useState('');
 
   useEffect(() => {
     const handleSelection = () => {
@@ -41,14 +44,23 @@ const FoxAILearningPlatform = () => {
 
     const userMessage = { role: 'user', content: inputMessage };
     setMessages(prev => [...prev, userMessage]);
+    setLastUserMessage(inputMessage);
     setInputMessage('');
 
     setTimeout(() => {
+      let responseContent;
+      if (inputMessage.includes('ある')) {
+        responseContent = 'こちらに検索がヒットされた説明文が表示されます。\n\nもしこちらの説明でも分からない場合は、下の「講師に質問する」ボタンからお気軽にご質問ください。';
+      } else {
+        responseContent = '申し訳ございませんが、今回は検索結果がありません。';
+      }
+
       const aiResponse = {
         role: 'assistant',
-        content: `「${inputMessage}」についてお答えします。これは学習内容に関連する重要な概念ですね。具体的にどの部分について詳しく知りたいですか?`
+        content: responseContent
       };
       setMessages(prev => [...prev, aiResponse]);
+      setShowInstructorButton(true);
     }, 1000);
   };
 
@@ -56,6 +68,20 @@ const FoxAILearningPlatform = () => {
     setShowPopup(false);
     setIsChatOpen(true);
     setInputMessage(`「${selectedText}」について教えてください`);
+  };
+
+  const handleInstructorQuestion = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmQuestion = () => {
+    setShowConfirmModal(false);
+    setShowInstructorButton(false);
+    alert('講師への質問を送信しました。');
+  };
+
+  const handleCancelQuestion = () => {
+    setShowConfirmModal(false);
   };
 
   return (
@@ -73,7 +99,7 @@ const FoxAILearningPlatform = () => {
             <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">SL</span>
             </div>
-            <span className="text-xl font-bold text-white">SLスクナ</span>
+            <span className="text-xl font-bold text-white">SLスタジオ</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -249,7 +275,7 @@ const FoxAILearningPlatform = () => {
 
           {/* Chat Input */}
           <div className="p-4 border-t border-gray-700">
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={inputMessage}
@@ -265,11 +291,46 @@ const FoxAILearningPlatform = () => {
                 <Send size={20} />
               </button>
             </div>
+            {showInstructorButton && (
+              <button
+                onClick={handleInstructorQuestion}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2 text-sm font-medium"
+              >
+                講師に質問する
+              </button>
+            )}
           </div>
 
           {/* Foxhound Logo */}
           <div className="px-4 pb-2 text-center">
             <p className="text-xs text-gray-500">Powered by foxhound株式会社</p>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-4 border border-gray-700">
+            <h3 className="text-lg font-bold text-white mb-4">講師への質問確認</h3>
+            <p className="text-gray-300 mb-2">この内容で質問しますか？</p>
+            <div className="bg-gray-700 rounded-lg p-3 mb-4 text-gray-100 text-sm">
+              {lastUserMessage}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelQuestion}
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg text-sm"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleConfirmQuestion}
+                className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm"
+              >
+                質問する
+              </button>
+            </div>
           </div>
         </div>
       )}
