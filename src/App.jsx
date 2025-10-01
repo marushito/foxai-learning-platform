@@ -14,6 +14,11 @@ const FoxAILearningPlatform = () => {
   const [showInstructorButton, setShowInstructorButton] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState('');
+  const [questionForm, setQuestionForm] = useState({
+    stuckPoint: '',
+    triedSolutions: '',
+    errorDetails: ''
+  });
 
   useEffect(() => {
     const handleSelection = () => {
@@ -71,10 +76,19 @@ const FoxAILearningPlatform = () => {
   };
 
   const handleInstructorQuestion = () => {
+    setQuestionForm({
+      stuckPoint: '',
+      triedSolutions: '',
+      errorDetails: ''
+    });
     setShowConfirmModal(true);
   };
 
   const handleConfirmQuestion = () => {
+    if (!questionForm.stuckPoint.trim() || !questionForm.triedSolutions.trim() || !questionForm.errorDetails.trim()) {
+      alert('すべての項目を入力してください。');
+      return;
+    }
     setShowConfirmModal(false);
     setShowInstructorButton(false);
     alert('講師への質問を送信しました。');
@@ -82,6 +96,13 @@ const FoxAILearningPlatform = () => {
 
   const handleCancelQuestion = () => {
     setShowConfirmModal(false);
+  };
+
+  const handleFormChange = (field, value) => {
+    setQuestionForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -310,25 +331,75 @@ const FoxAILearningPlatform = () => {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-4 border border-gray-700">
-            <h3 className="text-lg font-bold text-white mb-4">講師への質問確認</h3>
-            <p className="text-gray-300 mb-2">この内容で質問しますか？</p>
-            <div className="bg-gray-700 rounded-lg p-3 mb-4 text-gray-100 text-sm">
-              {lastUserMessage}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-2">講師への質問</h3>
+            <p className="text-gray-400 text-sm mb-6">以下のテンプレートに沿ってご記入ください</p>
+
+            {/* Original Question Context */}
+            <div className="bg-gray-900 rounded-lg p-4 mb-6 border border-gray-700">
+              <p className="text-xs text-gray-400 mb-2">元の質問</p>
+              <p className="text-gray-100 text-sm">{lastUserMessage}</p>
             </div>
-            <div className="flex gap-3">
+
+            {/* Question Form */}
+            <div className="space-y-5">
+              {/* Stuck Point */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-cyan-400 mb-2">
+                  <span className="bg-cyan-500 text-white text-xs px-2 py-0.5 rounded">必須</span>
+                  1. どの部分でつまずいていますか？
+                </label>
+                <textarea
+                  value={questionForm.stuckPoint}
+                  onChange={(e) => handleFormChange('stuckPoint', e.target.value)}
+                  placeholder="例: HTMLの構造について理解できていません"
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 border border-gray-600 resize-none h-24"
+                />
+              </div>
+
+              {/* Tried Solutions */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-cyan-400 mb-2">
+                  <span className="bg-cyan-500 text-white text-xs px-2 py-0.5 rounded">必須</span>
+                  2. すでに試したことはありますか？
+                </label>
+                <textarea
+                  value={questionForm.triedSolutions}
+                  onChange={(e) => handleFormChange('triedSolutions', e.target.value)}
+                  placeholder="例: 動画を2回見返しましたが、タグの使い方がわかりませんでした"
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 border border-gray-600 resize-none h-24"
+                />
+              </div>
+
+              {/* Error Details */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-cyan-400 mb-2">
+                  <span className="bg-cyan-500 text-white text-xs px-2 py-0.5 rounded">必須</span>
+                  3. 具体的なエラー内容や困っている点
+                </label>
+                <textarea
+                  value={questionForm.errorDetails}
+                  onChange={(e) => handleFormChange('errorDetails', e.target.value)}
+                  placeholder="例: コードを書いてもページが表示されません。エラーメッセージは表示されていません"
+                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500 border border-gray-600 resize-none h-28"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={handleCancelQuestion}
-                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg text-sm"
+                className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors border border-gray-600"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleConfirmQuestion}
-                className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg"
               >
-                質問する
+                質問を送信
               </button>
             </div>
           </div>
