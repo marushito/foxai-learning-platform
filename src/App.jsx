@@ -3,15 +3,12 @@ import { MessageCircle, X, Send, Menu, Lock } from 'lucide-react';
 
 const FoxAILearningPlatform = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'こんにちは!FoxAIです。学習のサポートをさせていただきます。何でもお気軽にお聞きください!' }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showInstructorButton, setShowInstructorButton] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState('');
   const [questionForm, setQuestionForm] = useState({
@@ -19,6 +16,66 @@ const FoxAILearningPlatform = () => {
     triedSolutions: '',
     errorDetails: ''
   });
+  const [conversationStep, setConversationStep] = useState(0);
+  const messagesEndRef = React.useRef(null);
+
+  const conversationFlow = [
+    { role: 'user', content: '変数って何ですか' },
+    {
+      role: 'assistant',
+      content: '3つの説明を用意しました：\n【シンプル版】 データを入れる箱です\n【例え話】 連絡先に「太郎=090-1234」と登録するのと同じ\n【コード例】\nx = 10\nprint(x) → 10\n理解できましたか？'
+    },
+    { role: 'user', content: 'よくわからないです' },
+    {
+      role: 'assistant',
+      content: '大丈夫です。どの部分が分かりませんか？\n① 「箱」のイメージが分からない\n② コードの書き方が分からない\n③ なぜ変数が必要なのか分からない\n④ 全部分からない'
+    },
+    { role: 'user', content: '④' },
+    {
+      role: 'assistant',
+      content: 'では最初から一緒にやりましょう。\nまず、あなたの名前を教えてください'
+    },
+    { role: 'user', content: '田中です' },
+    {
+      role: 'assistant',
+      content: 'ありがとうございます。では質問です。\n明日、田中さんに電話したいとき、\nあなたは電話番号を覚えていますか？'
+    },
+    { role: 'user', content: '覚えてないです' },
+    {
+      role: 'assistant',
+      content: 'そうですよね。だからスマホの連絡先に\n「田中 = 090-1234-5678」\nと保存しますよね？\n次に電話するとき、番号を思い出す必要がなく\n「田中」を選ぶだけで電話できます。\nこれが変数の考え方です。理解できますか？'
+    },
+    { role: 'user', content: 'なんとなく' },
+    {
+      role: 'assistant',
+      content: 'では、コードで同じことをします。\nエディタを開いて、以下を1行ずつ入力してください：\nname = "田中"\n入力できたら「できた」と送ってください'
+    },
+    { role: 'user', content: 'できた' },
+    {
+      role: 'assistant',
+      content: '素晴らしい！今、nameという変数に\n「田中」という文字を入れました。\n次に、この行を追加してください：\nprint(name)\n入力して実行してください。何が表示されますか？'
+    },
+    { role: 'user', content: '田中って出ました' },
+    {
+      role: 'assistant',
+      content: '完璧です！これが変数です。\nnameという「箱」に「田中」を入れた\n↓\nprint(name)で箱の中身を見た\n↓\n「田中」が表示された\nスマホの連絡先と同じですよね？\n「name」という名前で「田中」を呼び出せました。\nここまで理解できましたか？'
+    },
+    { role: 'user', content: 'わかりました' },
+    {
+      role: 'assistant',
+      content: '素晴らしい！では次に、\nage = 25\nprint(age)\nと入力してみてください。何が表示されますか？'
+    },
+    { role: 'user', content: '25' },
+    {
+      role: 'assistant',
+      content: '完璧です！変数は数字も入れられます。\n最後に応用です。以下を入力してください：\nname = "田中"\nage = 25\nprint(name)\nprint(age)\n何が表示されますか？'
+    },
+    { role: 'user', content: '田中と25' },
+    {
+      role: 'assistant',
+      content: '完璧です！これで変数の基本は理解できました。\nまとめ：\n・変数 = データを入れる箱\n・箱に名前をつける（name、ageなど）\n・後で名前を呼べば中身が取り出せる\n課題に進めそうですか？\nそれとも、もう一度復習しますか？'
+    }
+  ];
 
   useEffect(() => {
     const handleSelection = () => {
@@ -44,6 +101,17 @@ const FoxAILearningPlatform = () => {
     return () => document.removeEventListener('mouseup', handleSelection);
   }, []);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleNextConversation = () => {
+    if (conversationStep < conversationFlow.length) {
+      setMessages(prev => [...prev, conversationFlow[conversationStep]]);
+      setConversationStep(conversationStep + 1);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -65,7 +133,6 @@ const FoxAILearningPlatform = () => {
         content: responseContent
       };
       setMessages(prev => [...prev, aiResponse]);
-      setShowInstructorButton(true);
     }, 1000);
   };
 
@@ -76,10 +143,15 @@ const FoxAILearningPlatform = () => {
   };
 
   const handleInstructorQuestion = () => {
+    // AIとの会話履歴から質問内容を推測
+    const userMessages = messages.filter(msg => msg.role === 'user');
+    const lastUserMsg = userMessages[userMessages.length - 1]?.content || '';
+
+    // 会話履歴から推測した内容を自動入力
     setQuestionForm({
-      stuckPoint: '',
-      triedSolutions: '',
-      errorDetails: ''
+      stuckPoint: lastUserMsg || '変数の概念について理解が難しい状況です',
+      triedSolutions: 'FoxAIと対話しながら学習を試みましたが、さらに詳しい説明が必要だと感じました',
+      errorDetails: '変数の基本的な使い方や、なぜ変数が必要なのかという部分で疑問が残っています'
     });
     setShowConfirmModal(true);
   };
@@ -254,7 +326,7 @@ const FoxAILearningPlatform = () => {
 
       {/* Chat Window */}
       {isChatOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-gray-800 rounded-lg shadow-2xl flex flex-col border border-gray-700">
+        <div className="fixed bottom-6 right-6 w-[450px] h-[650px] bg-gray-800 rounded-lg shadow-2xl flex flex-col border border-gray-700">
           {/* Chat Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -287,39 +359,36 @@ const FoxAILearningPlatform = () => {
                       ? 'bg-cyan-600 text-white'
                       : 'bg-gray-700 text-gray-100'
                   }`}
+                  style={{ whiteSpace: 'pre-line' }}
                 >
                   {msg.content}
                 </div>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Chat Input */}
           <div className="p-4 border-t border-gray-700">
             <div className="flex gap-2 mb-3">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="メッセージを入力..."
-                className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              />
               <button
-                onClick={handleSendMessage}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg p-2"
+                onClick={handleNextConversation}
+                disabled={conversationStep >= conversationFlow.length}
+                className={`rounded-lg p-2 ${
+                  conversationStep >= conversationFlow.length
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-cyan-500 hover:bg-cyan-600 text-white'
+                }`}
               >
                 <Send size={20} />
               </button>
             </div>
-            {showInstructorButton && (
-              <button
-                onClick={handleInstructorQuestion}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2 text-sm font-medium"
-              >
-                講師に質問する
-              </button>
-            )}
+            <button
+              onClick={handleInstructorQuestion}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2 text-sm font-medium"
+            >
+              講師に質問する
+            </button>
           </div>
 
           {/* Foxhound Logo */}
